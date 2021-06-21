@@ -23,6 +23,12 @@ io.on("connection", (socket) => {
     clearInterval(interval);
   }
   interval = setInterval(() => getApiAndEmit(socket), 1000);
+
+  socket.on("story-point", (name, storyPoint) => {
+    console.log(`${name} chooses ${storyPoint}`);
+    socket.broadcast.emit('estimates', { name: name, storyPoint: storyPoint});
+  });
+
   socket.on("disconnect", () => {
     console.log("Client disconnected");
     clearInterval(interval);
@@ -31,7 +37,6 @@ io.on("connection", (socket) => {
 
 const getApiAndEmit = socket => {
   const response = new Date();
-  // Emitting a new message. Will be consumed by the client
   socket.emit("FromAPI", response);
 };
 
