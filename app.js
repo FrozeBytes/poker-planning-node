@@ -25,8 +25,11 @@ io.on("connection", (socket) => {
   interval = setInterval(() => getApiAndEmit(socket), 1000);
 
   socket.on("story-point", (name, storyPoint) => {
-    console.log(`${name} chooses ${storyPoint}`);
     socket.broadcast.emit('estimates', { name: name, storyPoint: storyPoint});
+  });
+
+  socket.on("reveal-estimates", (reveal) => {
+    io.emit('reveal', reveal);
   });
 
   socket.on("disconnect", () => {
