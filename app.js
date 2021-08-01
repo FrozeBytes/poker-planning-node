@@ -15,32 +15,37 @@ const io = socketIo(server, {cors: {
   methods: ["GET", "POST"]
 }});
 
-let interval;
+let currentEstimates = [];
 
 io.on("connection", (socket) => {
   console.log("New client connected");
-  if (interval) {
-    clearInterval(interval);
-  }
-  interval = setInterval(() => getApiAndEmit(socket), 1000);
+
+  let user = '';
+  socket.emit('currentEstimates', currentEstimates);
 
   socket.on("story-point", (name, storyPoint) => {
+    user = name;
+    const index = currentEstimates.findIndex((estimate) => estimate.name === name);
+    if (index !== -1) {
+      currentEstimates[index].storyPoint = storyPoint;
+    } else {
+      currentEstimates.push({ name: name, storyPoint: storyPoint});
+    }
     socket.broadcast.emit('estimates', { name: name, storyPoint: storyPoint});
   });
 
   socket.on("reveal-estimates", (reveal) => {
+    if(!reveal) {
+      currentEstimates = [];
+    }
     io.emit('reveal', reveal);
   });
 
   socket.on("disconnect", () => {
+    io.emit('remove-user', user);
+    currentEstimates = currentEstimates.filter((estimate) => estimate.name !== user);
     console.log("Client disconnected");
-    clearInterval(interval);
   });
 });
-
-const getApiAndEmit = socket => {
-  const response = new Date();
-  socket.emit("FromAPI", response);
-};
 
 server.listen(port, () => console.log(`Listening on port ${port}`));
